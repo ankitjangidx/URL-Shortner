@@ -8,6 +8,9 @@ import { errorHandler } from './middlewares/error.middleware';
 import { requestResponseLogger } from './middlewares/logger.middleware';
 import v1Router from './routes/v1/index.routes';
 import v2Router from './routes/v2/index.routes';
+import { createExpressMiddleware } from '@trpc/server/adapters/express';
+import { appRouter } from './routes/trpc';
+import { redirectController } from './controllers/url.controller';
 
 const app: Application = express();
 
@@ -40,6 +43,13 @@ if (serverConfig.isDevelopment) {
 app.use('/api/v1', v1Router);
 app.use('/api/v2', v2Router);
 
+app.use(
+  '/trpc',
+  createExpressMiddleware({
+    router: appRouter,
+  })
+);
+
 // Base route for quick test
 app.get('/', (_req, res) => {
   res.json({
@@ -48,6 +58,9 @@ app.get('/', (_req, res) => {
     hotReload: true,
   });
 });
+
+// Short URL Redirection Endpoint (GET /:shortUrl)
+app.get('/:shortUrl', redirectController);
 
 // 404 Route Handler
 app.use(notFoundHandler);

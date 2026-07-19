@@ -11,7 +11,7 @@ export class UrlRepository {
   }
 
   async findAll(): Promise<SUrl[]> {
-    return await SUrlModel.find().sort({ createAt: -1 });
+    return await SUrlModel.find().sort({ createdAt: -1 });
   }
   async incrementClick(shortUrl: string): Promise<void> {
     await SUrlModel.findOneAndUpdate(

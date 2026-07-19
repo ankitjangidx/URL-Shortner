@@ -21,3 +21,19 @@ export class ApiError extends Error {
     }
   }
 }
+
+export class NotFoundError extends ApiError {
+  constructor(message: string = 'Resource not found', errors: string[] = [], stack: string = '') {
+    super(404, message, errors, stack);
+  }
+}
+
+export class InternalServerError extends ApiError {
+  constructor(
+    message: string = 'Internal Server Error',
+    errors: string[] = [],
+    stack: string = ''
+  ) {
+    super(500, message, errors, stack);
+  }
+}

@@ -1,42 +1,59 @@
-# 🔗 Express TypeScript URL Shortener Service
+# 🔗 URL Shortener Microservice (Express + TypeScript + tRPC + Redis + MongoDB + Docker)
 
-A production-ready, high-performance **URL Shortener microservice** built with Express.js, TypeScript, MongoDB (Mongoose), Redis, and Docker. 
+A production-grade, high-performance **URL Shortener Microservice** built with **Express 5**, **TypeScript**, **tRPC v11**, **Zod**, **MongoDB (Mongoose)**, **Redis**, and **Docker**.
 
-Designed with a clean multi-layer architecture (DTOs, Repositories, Services, Controllers) featuring atomic counter-based short URL generation, fast Redis caching layer, and full Docker containerization with live hot reloading.
+Features atomic Base62 short-code generation, fast Redis caching, tRPC Endpoints with Zod schema validation, HTTP 302 redirection, and Docker containerization with hot-reloading.
 
 ---
 
-## 🚀 Key Features
+## ✨ Features
 
-- ⚡ **TypeScript & Node.js**: Strict type checking with modern ESNext features.
-- 🚀 **High Performance Caching**: Redis integration for $O(1)$ fast URL redirection and atomic counter generation.
-- 🍃 **Persistent Database**: MongoDB with Mongoose schemas, indexed `shortUrl`, and automated timestamps.
-- 🐳 **Docker & Docker Compose**: Multi-container setup containing Express, MongoDB, and Redis with live hot reloading.
-- 🏗️ **Clean Architecture**: Layered separation using DTOs, Repositories, Controllers, and Middlewares.
+- ⚡ **TypeScript & Express 5**: Strict type safety with modern async request handling.
+- 🧙‍♂️ **tRPC v11 Integration**: End-to-end type-safe API procedures (`url.create`, `url.getOriginalUrl`).
+- 🛡️ **Zod Validation**: Input payload validation with custom error messages.
+- 🚀 **High Performance Redis Cache**: Sub-millisecond lookup cache for short URL resolution and atomic counter generation.
+- 🍃 **Persistent MongoDB Storage**: Mongoose schemas with indexed `shortUrl` and click tracking.
+- 🔀 **HTTP 302 Redirection**: Dedicated high-speed Express redirection route (`GET /:shortUrl`) with click analytics.
+- 🐳 **Docker & Docker Compose**: Instant multi-container setup (Express + MongoDB + Redis) with volume mounts for live hot reloading.
 - 🛡️ **Security**: Pre-configured with `helmet` and `cors` security headers.
-- 📝 **Structured API**: Standardized JSON responses (`ApiResponse`, `ApiError`, `asyncHandler`).
-- 🧹 **Code Quality**: Linting and formatting with ESLint, Prettier, and Husky pre-commit hooks.
-- 🔌 **Graceful Shutdown**: Handles `SIGTERM` and `SIGINT` signals to close MongoDB & Redis connections cleanly.
+- 📦 **Smart Dependency Helper**: Custom `npm run add` command to install packages on Mac and Docker simultaneously.
 
 ---
 
-## 📂 Project Structure
+## 🏗️ Architecture & Technology Stack
+
+| Layer | Technology | Description |
+| :--- | :--- | :--- |
+| **Runtime & Language** | Node.js 20 & TypeScript 5 | Typed server-side JavaScript runtime |
+| **API Framework** | Express.js 5 & tRPC 11 | Type-safe RPC router & Express HTTP server |
+| **Schema Validation** | Zod | Runtime type safety & payload validation |
+| **Caching Layer** | Redis 7 | In-memory cache for fast lookups & atomic ID counter |
+| **Database** | MongoDB 7 (Mongoose 9) | Persistent document store for URL mapping & analytics |
+| **Orchestration** | Docker & Docker Compose | Containerization for app, database, and cache |
+
+---
+
+## 📁 Project Structure
 
 ```text
 ├── src/
-│   ├── config/          # Environment variables, MongoDB & Redis connections
-│   ├── controllers/     # Handlers for HTTP requests/responses
-│   ├── dtos/            # Data Transfer Objects & Interfaces
-│   ├── middlewares/     # Error handling, 404 handler, request loggers
-│   ├── models/          # Mongoose database schemas & models
+│   ├── config/          # Environment configuration & DB/Redis setup
+│   ├── controllers/     # Controller layer & Express redirect handlers
+│   ├── dtos/            # Data Transfer Objects & TypeScript interfaces
+│   ├── middlewares/     # Error handling, 404, logger middlewares
+│   ├── models/          # Mongoose database schemas (SUrlModel)
 │   ├── repositories/    # Database & Redis caching repository layer
-│   ├── routes/          # Express route definitions (v1, v2)
-│   ├── utils/           # Utilities (ApiError, ApiResponse, asyncHandler)
+│   ├── routes/          # Express API & tRPC router definitions
+│   │   ├── trpc/        # tRPC appRouter, context, and urlRouter
+│   │   ├── v1/          # Express REST API v1 routes
+│   │   └── v2/          # Express REST API v2 routes
+│   ├── services/        # Business logic layer (SUrlService)
+│   ├── utils/           # ApiError, ApiResponse, Base62 encoder, asyncHandler
 │   ├── app.ts           # Express app initialization & middleware stack
 │   └── server.ts        # Entrypoint, server boot & graceful shutdown
 ├── Dockerfile           # Multi-stage Docker build config
-├── docker-compose.yml   # Orchestration for Express, MongoDB & Redis
-├── .env.example         # Template environment variables
+├── docker-compose.yml   # Multi-container orchestration (App, Mongo, Redis)
+├── .env.example         # Template environment file
 ├── tsconfig.json        # TypeScript configuration
 ├── package.json
 └── README.md
@@ -44,89 +61,127 @@ Designed with a clean multi-layer architecture (DTOs, Repositories, Services, Co
 
 ---
 
-## 🛠️ Tech Stack & Architecture
+## ⚙️ Quick Start
 
-| Layer | Technology | Purpose |
-| :--- | :--- | :--- |
-| **Language** | TypeScript / Node.js 20 | Static typing and runtime engine |
-| **Framework** | Express.js 5 | Lightweight HTTP API framework |
-| **Database** | MongoDB + Mongoose 9 | Primary database for URL records & analytics |
-| **Cache Store** | Redis 7 | High-speed cache for short URL lookups & ID counters |
-| **Containerization** | Docker & Docker Compose | Multi-container environment orchestration |
-
----
-
-## ⚙️ Quick Start with Docker (Recommended)
-
-### Prerequisites
+### 1. Prerequisites
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
 
-### 1. Clone & Setup Environment
+### 2. Setup Environment Variables
 
 ```bash
 cp .env.example .env
 ```
 
-### 2. Start Full Stack (App + MongoDB + Redis)
+### 3. Launch with Docker Compose
 
 ```bash
 npm run docker:up
 ```
 
 This starts:
-- **Express API**: `http://localhost:3000` (with live hot reloading)
+- **Express API & tRPC Server**: `http://localhost:3000`
 - **MongoDB**: `localhost:27017`
 - **Redis**: `localhost:6379`
 
 ---
 
-## 📦 Local Development (Without Docker)
+## 📡 API Reference & Usage
 
-### Prerequisites
+### 1. Create a Short URL (`tRPC Mutation`)
 
-- Node.js (v18+ or v20+)
-- MongoDB and Redis servers running locally.
+**Endpoint**: `POST http://localhost:3000/trpc/url.create`
 
-### Steps
+```bash
+curl --location 'http://localhost:3000/trpc/url.create' \
+--header 'Content-Type: application/json' \
+--data '{
+    "originalUrl": "https://trpc.io/docs/server/adapters/express"
+}'
+```
 
-1. **Install Dependencies**:
-   ```bash
-   npm install
-   ```
-
-2. **Run Dev Server**:
-   ```bash
-   npm run dev
-   ```
-
-3. **Build TypeScript for Production**:
-   ```bash
-   npm run build
-   npm start
-   ```
+**Response**:
+```json
+{
+  "result": {
+    "data": {
+      "id": "6a5d09de6bbccc10a0c0a003",
+      "shortUrl": "3",
+      "originalUrl": "https://trpc.io/docs/server/adapters/express",
+      "clicks": 0,
+      "fullUrl": "http://localhost:3000/3",
+      "createdAt": "2026-07-19T17:31:10.604Z",
+      "updatedAt": "2026-07-19T17:31:10.604Z"
+    }
+  }
+}
+```
 
 ---
 
-## 📜 Available NPM Scripts
+### 2. Inspect / Get Original URL (`tRPC Query`)
+
+Read-only lookup. Does **not** increment click analytics.
+
+**Endpoint**: `GET http://localhost:3000/trpc/url.getOriginalUrl`
+
+```bash
+curl -G 'http://localhost:3000/trpc/url.getOriginalUrl' \
+  --data-urlencode 'input={"shortUrl":"3"}'
+```
+
+**Response**:
+```json
+{
+  "result": {
+    "data": {
+      "originalUrl": "https://trpc.io/docs/server/adapters/express",
+      "shortUrl": "3"
+    }
+  }
+}
+```
+
+---
+
+### 3. Redirection & Click Counter (`HTTP 302 GET /:shortUrl`)
+
+Visits the short code, increments the click counter, and redirects the browser/client.
+
+**Endpoint**: `GET http://localhost:3000/:shortUrl`
+
+```bash
+curl -i http://localhost:3000/3
+```
+
+**Response**:
+```http
+HTTP/1.1 302 Found
+Location: https://trpc.io/docs/server/adapters/express
+
+Found. Redirecting to https://trpc.io/docs/server/adapters/express
+```
+
+---
+
+## 📦 NPM & Docker Scripts
 
 | Script | Command | Description |
 | :--- | :--- | :--- |
-| `npm run dev` | `node --import tsx --watch src/server.ts` | Starts development server with native hot reload |
+| `npm run dev` | `node --import tsx --watch src/server.ts` | Starts development server with native hot reloading |
+| `npm run add package-name` | `sh -c 'npm i "$@" && docker exec express_app npm i "$@"' --` | Installs dependency on Mac and Docker container simultaneously |
 | `npm run build` | `tsc` | Compiles TypeScript source to `dist/` |
 | `npm start` | `node dist/server.js` | Runs production JavaScript build |
-| `npm run docker:up` | `docker compose up -d --build` | Starts all services in background via Docker |
+| `npm run docker:up` | `docker compose up -d --build` | Launches all containers in background |
 | `npm run docker:down` | `docker compose down` | Stops Docker containers |
-| `npm run docker:clean` | `docker compose down -v` | Stops containers and resets database volumes |
-| `npm run docker:reset` | `docker compose down -v && docker compose up -d --build` | Full fresh container reset |
-| `npm run docker:logs` | `docker compose logs -f` | Tails live Docker logs |
+| `npm run docker:clean` | `docker compose down -v` | Stops containers and removes database volumes |
+| `npm run docker:reset` | `docker compose down -v && docker compose up -d --build` | Full fresh container rebuild |
+| `npm run docker:logs` | `docker compose logs -f` | Tails live container logs |
 | `npm run lint` | `eslint .` | Runs ESLint analysis |
 | `npm run format` | `prettier --write "src/**/*.ts"` | Formats code with Prettier |
 
 ---
 
-## 🌐 Sample Endpoints
+## 📄 License
 
-- `GET /` - Base server greeting and status
-- `GET /api/v1/health` - System health check & uptime monitor
-- `GET /api/v1/sample` - Sample response endpoint
+This project is open-source under the ISC License.

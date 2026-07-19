@@ -13,6 +13,7 @@ export type ServerConfig = {
   mongoURI: string;
   redisURI: string;
   REDIS_COUTNER_KEY: string;
+  BASE_URL: string
 };
 
 export const serverConfig: ServerConfig = {
@@ -24,6 +25,7 @@ export const serverConfig: ServerConfig = {
   mongoURI: process.env.MONGO_URI || 'mongodb://localhost:27017/express_starter',
   redisURI: process.env.REDIS_URI || 'redis://localhost:6379',
   REDIS_COUTNER_KEY: process.env.REDIS_COUTNER_KEY || 'url_shortner_counter',
+  BASE_URL: process.env.BASE_URL || "https://bit"
 };
 
 
