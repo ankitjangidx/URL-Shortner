@@ -20,6 +20,119 @@ Features atomic Base62 short-code generation, fast Redis caching, tRPC Endpoints
 
 ---
 
+## 🏛️ 1. Full System Architecture Diagram (Component Blocks)
+
+```mermaid
+flowchart TB
+    subgraph Clients ["1. Client Layer"]
+        C1["🌐 Web Browser"]
+        C2["📱 Mobile App"]
+        C3["💻 tRPC / HTTP Client"]
+    end
+
+    subgraph Security ["2. Middleware & Security Layer"]
+        M1["🛡️ Helmet Security Headers"]
+        M2["🌐 CORS Policy Manager"]
+        M3["📝 Morgan & Request Logger"]
+        M4["🚨 Global Error & 404 Handlers"]
+    end
+
+    subgraph Routing ["3. Routing & Validation Layer"]
+        R1["⚡ Express 5 Application (app.ts)"]
+        R2["🧙‍♂️ tRPC Adapter & Router (appRouter)"]
+        R3["🛡️ Zod Schema Validator"]
+        R4["🔀 HTTP 302 Redirection Route (GET /:shortUrl)"]
+    end
+
+    subgraph Controllers ["4. Controller Layer"]
+        CTL1["UrlController (create & getOriginalUrl)"]
+        CTL2["redirectController (HTTP Redirection)"]
+    end
+
+    subgraph Services ["5. Business Logic & Service Layer"]
+        S1["⚙️ SUrlService"]
+        S2["🔤 Base62 Encoder (toBase62)"]
+    end
+
+    subgraph Repositories ["6. Repository Abstraction Layer"]
+        REP1["📦 CacheRepository (Redis Bridge)"]
+        REP2["🗄️ UrlRepository (MongoDB Mongoose Bridge)"]
+    end
+
+    subgraph Databases ["7. Storage & Infrastructure Layer"]
+        DB1[("⚡ Redis 7 (In-Memory)\n- Atomic Counter (INCR)\n- TTL Cache (url:code)")]
+        DB2[("🍃 MongoDB 7 (Database)\n- SUrl Collection\n- Indexed shortUrl\n- Click Analytics")]
+    end
+
+    %% Client Interactions
+    C1 -->|"GET /:shortUrl"| M1
+    C2 -->|"POST /trpc/url.create"| M1
+    C3 -->|"GET /trpc/url.getOriginalUrl"| M1
+
+    M1 --> M2 --> M3 --> R1
+
+    %% Routing
+    R1 --> R4
+    R1 --> R2
+    R2 --> R3
+
+    R3 --> CTL1
+    R4 --> CTL2
+
+    %% Controllers to Service
+    CTL1 --> S1
+    CTL2 --> S1
+
+    %% Service internal logic
+    S1 --> S2
+
+    %% Service to Repositories
+    S1 --> REP1
+    S1 --> REP2
+
+    %% Repositories to Databases
+    REP1 -->|"Atomic INCR & GET/SET Cache"| DB1
+    REP2 -->|"Insert, Find & incrementClick"| DB2
+```
+
+---
+
+## 📐 2. User Perspective Sequence Diagram (Flow of Requests)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Creator as Link Creator (User)
+    actor Visitor as Link Visitor (End User)
+    participant Server as Express Server (app.ts)
+    participant Redis as Redis Cache (Memory)
+    participant Mongo as MongoDB (Database)
+
+    Note over Creator, Server: 1. URL Creation Flow
+    Creator->>Server: POST /trpc/url.create { "originalUrl": "https://example.com" }
+    Server->>Redis: INCR url_shortner_counter (Atomic ID)
+    Redis-->>Server: Returns nextId (e.g. 3)
+    Server->>Server: Base62 Encode ID → shortUrl ("3")
+    Server->>Mongo: Insert Document { shortUrl: "3", originalUrl: "https://example.com" }
+    Server->>Redis: SET url:3 "https://example.com" (TTL 30 Days)
+    Server-->>Creator: Return Short URL ("http://localhost:3000/3")
+
+    Note over Visitor, Server: 2. Redirection & Click Analytics Flow
+    Visitor->>Server: GET /3 (Click Short Link in Browser)
+    Server->>Redis: GET url:3 (Check Cache)
+    alt Cache Hit (Sub-millisecond)
+        Redis-->>Server: Return originalUrl ("https://example.com")
+    else Cache Miss (Fallback)
+        Server->>Mongo: findByShortUrl("3")
+        Mongo-->>Server: Return Record
+        Server->>Redis: SET url:3 "https://example.com"
+    end
+    Server->>Mongo: incrementClick("3") (clicks + 1)
+    Server-->>Visitor: HTTP 302 Found (Location: https://example.com)
+```
+
+---
+
 ## 🏗️ Architecture & Technology Stack
 
 | Layer | Technology | Description |
